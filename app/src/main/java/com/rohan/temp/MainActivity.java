@@ -214,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
         // From Gallery (Video)
         if (resultCode == RESULT_OK && requestCode == 3) {
 
+            //test commit
 
         }
 
