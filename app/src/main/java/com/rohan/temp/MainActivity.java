@@ -36,6 +36,7 @@ import static android.R.attr.data;
 import static android.R.attr.mimeType;
 import static android.R.attr.path;
 import static android.R.attr.thumbnail;
+import static android.app.Activity.RESULT_OK;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -216,7 +217,78 @@ public class MainActivity extends AppCompatActivity {
 
             //test commit
 
+            Uri pickedVideo = data.getData();
+            TypedFile typedFile = getTypedFileFromUri(this, pickedVideo);
+//            TypedFile typedFile = new TypedFile("video/mp4", getFile(pickedVideo));
+
+            apiService.uploadRequirementsMedia("d658b3088a0511e6bee550e549216e14", 2, 2, "12345", typedFile, new Callback<ResponseRequirements>() {
+                @Override
+                public void success(ResponseRequirements responseRequirements, Response response) {
+                    Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+                    Log.e("Status ", response.getStatus() + "");
+                    textView.setText(response.getStatus() + "");
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    Toast.makeText(MainActivity.this, "Failure", Toast.LENGTH_SHORT).show();
+                    Log.e("Status ", error.getMessage());
+                    textView.setText(error.getMessage());
+                }
+            });
+
         }
 
     }
+
+    private File getFile(Uri uri) {
+        Cursor cursor =
+                getContentResolver().query(uri, null, null, null, null);
+        cursor.moveToFirst();
+        int fileNameIndex = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
+
+        return new File(cursor.getString(fileNameIndex));
+    }
+
+
+    private TypedFile getTypedFileFromUri(Context context, Uri uri) {
+        String mimeType;
+
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            Log.e(TAG, "true");
+//            mimeType = context.getContentResolver().getType(uri);
+            mimeType = getContentResolver().getType(uri);
+            Log.e(TAG, "mimeType = " + mimeType);
+        } else {
+            Log.e(TAG, "false");
+            String extension = MimeTypeMap.getFileExtensionFromUrl(uri.getPath());
+            Log.e(TAG, "extension = " + extension);
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            Log.e(TAG, "mimeType = " + mimeType);
+//        mimeType = "video/mp4";
+        }
+
+        if (mimeType == null) {
+            return null;
+        }
+
+        String path = uri.getPath();
+        // File path and mimeType are required
+        if (path == null)
+            return null;
+
+        File videoFileFolder = new File(getCacheDir(), "Avatar2");
+        if (!videoFileFolder.exists()) {
+            videoFileFolder.mkdirs();
+        }
+
+        File file = new File(path);
+//        File videoFileName = new File(videoFileFolder, "avatar-" + System.currentTimeMillis() + ".mp4");
+//        Log.e(TAG, videoFileName.getAbsolutePath());
+        Log.e(TAG, file.getAbsolutePath());
+
+//        return new TypedFile(mimeType, videoFileName);
+        return new TypedFile(mimeType, file);
+    }
+
 }
